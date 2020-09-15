@@ -136,6 +136,8 @@ int main(int argc, char **argv) {
     /* Read input image to a blob and set it to an infer request without resize and layout conversions. */
     c_mat_t img;
     image_read(input_image_path, &img);
+    // just use the first channel of the image due to model's requirement.
+    img.mat_channels = 1;
 
     dimensions_t dimens = {4, {1, (size_t)img.mat_channels, (size_t)img.mat_height, (size_t)img.mat_width}};
     tensor_desc_t tensorDesc = {NHWC, dimens, U8};
@@ -148,6 +150,7 @@ int main(int argc, char **argv) {
     }
     //infer_request accepts input blob of any size
 
+    for (int i = 0; i < 1000; ++i) {
     status = ie_infer_request_set_blob(infer_request, input_name, imgBlob);
     if (status != OK)
         goto err;
@@ -166,22 +169,12 @@ int main(int argc, char **argv) {
         image_free(&img);
         goto err;
     }
-    size_t class_num;
-    struct classify_res *cls = output_blob_to_classify_res(output_blob, &class_num);
-
-    classify_res_sort(cls, class_num);
-
-    // Print classification results
-    size_t top = 10;
-    if (top > class_num) {
-        top = class_num;
     }
-    printf("\nTop %zu results:\n", top);
-    print_classify_res(cls, top, input_image_path);
+
+    printf("program finished.\n");
 
     // -----------------------------------------------------------------------------------------------------
 
-    free(cls);
     ie_blob_free(&output_blob);
     ie_blob_free(&imgBlob);
     image_free(&img);
